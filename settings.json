@@ -14,7 +14,7 @@
   ],
   "profiles": {
     "defaults": {
-      "colorScheme": "Campbell",
+      "colorScheme": "One Half Dark",
       "font": {
         "face": "FiraCode Nerd Font",
         "size": 12
@@ -39,6 +39,6 @@
     ]
   },
   "schemes": [],
-  "themes": [],
-  "useAcrylicInTabRow": true
+  "theme": "dark",
+  "themes": []
 }
