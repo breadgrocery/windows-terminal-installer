@@ -29,9 +29,9 @@ public static class FontInstaller {
         return AddFontResource(fontFilePath);
     }
 }
-"@
-        [FontInstaller]::Install($fontPath) | Out-Null
-    } catch {}
+"@ [FontInstaller]::Install($fontPath) | Out-Null
+    }
+    catch {}
 }
 
 # Install oh-my-posh
