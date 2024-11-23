@@ -1,13 +1,9 @@
 Import-Module PSReadLine
-# [Tab] Gives a menu of suggestions
-Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
-# [UpArrow] Shows the most recent command
-Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
-# [DownArrow] Shows the least recent command
-Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
-# Shows tooltip during completion
-Set-PSReadLineOption -ShowToolTips
-# Gives completions/suggestions from historical commands
+# Use the PSReadLine history as the only source to get predictive suggestions.
 Set-PSReadLineOption -PredictionSource History
+# When displaying possible completions, tooltips are shown in the list of completions.
+Set-PSReadLineOption -ShowToolTips
+# Complete the suggestion by selecting from a menu of possible completion values.
+Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 
 oh-my-posh init pwsh --config $env:POSH_THEMES_PATH\montys.omp.json | Invoke-Expression
