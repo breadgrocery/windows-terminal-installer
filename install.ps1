@@ -12,7 +12,7 @@ if ($installation -eq "") {
 }else{
     $installation = "$installation\Windows Terminal"
 }
-Copy-Item -Path "Windows Terminal" -Destination $installation -Recurse -Force
+Copy-Item -Path "apps\Windows Terminal" -Destination $installation -Recurse -Force
 Copy-Item -Path "settings.json" -Destination "$env:LOCALAPPDATA\Microsoft\Windows Terminal" -Force
 
 Write-Output "Add Windows Terminal to context menu..."
@@ -23,8 +23,8 @@ reg add "HKEY_CLASSES_ROOT\Directory\Background\shell\runas\command" /t REG_SZ /
 
 Write-Output "Install Clink..."
 $clink_base = "$installation\clink"
-Copy-Item -Path "clink" -Destination $clink_base -Recurse -Force
-Copy-Item -Path "oh-my-posh.lua" -Destination $clink_base -Force
+Copy-Item -Path "apps\clink" -Destination $clink_base -Recurse -Force
+Copy-Item -Path "integrations\cmd\oh-my-posh.lua" -Destination $clink_base -Force
 [Environment]::SetEnvironmentVariable("CLINK_HOME", "$clink_base", "Machine")
 
 Write-Output "Install fonts..."
@@ -51,14 +51,14 @@ foreach ($font in $fonts) {
 
 Write-Output "Install oh-my-posh..."
 $oh_my_posh_home = "$installation\oh-my-posh"
-Copy-Item -Path "oh-my-posh" -Destination $oh_my_posh_home -Recurse -Force
+Copy-Item -Path "apps\oh-my-posh" -Destination $oh_my_posh_home -Recurse -Force
 [Environment]::SetEnvironmentVariable("Path", "$env:Path;$oh_my_posh_home\bin", "Machine")
 [Environment]::SetEnvironmentVariable("POSH_INSTALLER", "manual", "Machine")
 [Environment]::SetEnvironmentVariable("POSH_THEMES_PATH", "$oh_my_posh_home\themes", "Machine")
 
 Write-Output "Configure Windows Powershell..."
 $pwsh_profile = "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-Copy-Item -Path "Microsoft.PowerShell_profile.ps1" -Destination $pwsh_profile -Force
+Copy-Item -Path "integrations\powershell\Microsoft.PowerShell_profile.ps1" -Destination $pwsh_profile -Force
 
 Write-Output "Update PSReadLine Module..."
 Install-Module -Name PSReadLine
