@@ -1,68 +1,100 @@
-# Run as administrator
-$IsAdmin = [Security.Principal.WindowsIdentity]::GetCurrent().Groups -match "S-1-5-32-544"
-if (-not $IsAdmin) {
-    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File $PSCommandPath" -Verb runAs
-    exit
-}
+$global:installationPath = "C:\Program Files\Windows Terminal"
 
-Write-Output "Install Windows Terminal..."
-$installation = Read-Host "Please enter installation path (default: C:\Program Files\Windows Terminal)"
-if ($installation -eq "") {
-    $installation = "C:\Program Files\Windows Terminal"
-}
-$windows_terminal_base = "$installation\Windows Terminal"
-New-Item -Force -Type Directory $windows_terminal_base
-Copy-Item -Path "apps\Windows Terminal\*" -Destination "$windows_terminal_base" -Recurse -Force
-Copy-Item -Path "settings.json" -Destination "$env:LOCALAPPDATA\Microsoft\Windows Terminal" -Force
-
-Write-Output "Add Windows Terminal to context menu..."
-reg add "HKEY_CLASSES_ROOT\Directory\Background\shell\runas" /v ShowBasedOnVelocityId /t REG_DWORD /d 0x639bc8 /f
-reg add "HKEY_CLASSES_ROOT\Directory\Background\shell\runas" /v icon /t REG_SZ /d "$windows_terminal_base\WindowsTerminal.exe" /f
-reg add "HKEY_CLASSES_ROOT\Directory\Background\shell\runas" /t REG_SZ /d "Open Windows Terminal" /f
-reg add "HKEY_CLASSES_ROOT\Directory\Background\shell\runas\command" /t REG_SZ /d "$windows_terminal_base\WindowsTerminal.exe" /f
-
-Write-Output "Install Clink..."
-$clink_base = "$installation\clink"
-New-Item -Force -Type Directory $clink_base
-Copy-Item -Path "apps\clink\*" -Destination $clink_base -Recurse -Force
-Copy-Item -Path "integrations\cmd\oh-my-posh.lua" -Destination $clink_base -Force
-[Environment]::SetEnvironmentVariable("CLINK_HOME", "$clink_base", "Machine")
-
-Write-Output "Install fonts..."
-$fonts = Get-ChildItem -Path "Fonts" -Recurse -Include *.ttf
-foreach ($font in $fonts) {
-    Write-Host "Installing font: $($font.Name)"
-    $fontPath = "$env:WINDIR\Fonts\$($font.Name)"
-    try {
-        Copy-Item -Path $font.FullName -Destination $fontPath -Force
-        Add-Type -TypeDefinition @"
-    using System;
-    using System.Runtime.InteropServices;
-    public static class FontInstaller {
-        [DllImport("gdi32.dll")]
-        private static extern int AddFontResource(string lpFileName);
-        public static int Install(string fontFilePath) {
-            return AddFontResource(fontFilePath);
-        }
+function Restart-Privileged {
+    if (-not [Security.Principal.WindowsIdentity]::GetCurrent().Groups -match "S-1-5-32-544") {
+        Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File $PSCommandPath" -Verb runAs
+        exit
     }
+}
+
+function Copy-Directory {
+    param (
+        [string]$Source,
+        [string]$Destination
+    )
+    New-Item -Force -Type Directory -Path $Destination | Out-Null
+    Copy-Item -Path "$Source\*" -Destination $Destination -Recurse -Force | Out-Null
+}
+
+function Install-WindowsTerminal {
+    Write-Host "Installing Windows Terminal..."
+    $installationPath = Read-Host "Please enter installation path (default: C:\Program Files\Windows Terminal)"
+    if ($installationPath) { $global:installationPath = $installationPath }
+
+    $windowsTerminalBase = "$global:installationPath\Windows Terminal"
+    Copy-Directory -Source "apps\Windows Terminal" -Destination $windowsTerminalBase
+    Copy-Item -Path "settings.json" -Destination "$env:LOCALAPPDATA\Microsoft\Windows Terminal" -Force | Out-Null
+
+    # Context menu registration
+    Write-Host "Registering context menu for Windows Terminal..."
+    reg add "HKCR\Directory\Background\shell\runas" /v ShowBasedOnVelocityId /t REG_DWORD /d 0x639bc8 /f | Out-Null
+    reg add "HKCR\Directory\Background\shell\runas" /v icon /t REG_SZ /d "$windowsTerminalBase\WindowsTerminal.exe" /f | Out-Null
+    reg add "HKCR\Directory\Background\shell\runas" /t REG_SZ /d "Open Windows Terminal" /f | Out-Null
+    reg add "HKCR\Directory\Background\shell\runas\command" /t REG_SZ /d "$windowsTerminalBase\WindowsTerminal.exe" /f | Out-Null
+}
+
+function Install-OhMyPosh {
+    Write-Host "Installing oh-my-posh..."
+    $ohMyPoshHome = "$global:installationPath\oh-my-posh"
+    Copy-Directory -Source "apps\oh-my-posh" -Destination $ohMyPoshHome
+
+    Write-Host "Setting environment variables for oh-my-posh..."
+    [Environment]::SetEnvironmentVariable("Path", "$env:Path;$ohMyPoshHome\bin", "Machine")
+    [Environment]::SetEnvironmentVariable("POSH_INSTALLER", "manual", "Machine")
+    [Environment]::SetEnvironmentVariable("POSH_THEMES_PATH", "$ohMyPoshHome\themes", "Machine")
+}
+
+function Install-Fonts {
+    $fonts = Get-ChildItem -Path "Fonts" -Recurse -Include *.ttf
+    foreach ($font in $fonts) {
+        Write-Host "Installing font: $($font.Name)"
+        $fontPath = "$env:WINDIR\Fonts\$($font.Name)"
+        try {
+            Copy-Item -Path $font.FullName -Destination $fontPath -Force | Out-Null
+            Add-Type -TypeDefinition @"
+                using System;
+                using System.Runtime.InteropServices;
+                public static class FontInstaller {
+                    [DllImport("gdi32.dll")]
+                    private static extern int AddFontResource(string lpFileName);
+                    public static int Install(string fontFilePath) {
+                        return AddFontResource(fontFilePath);
+                    }
+                }
 "@ [FontInstaller]::Install($fontPath) | Out-Null
+        }
+        catch {}
     }
-    catch {}
 }
 
-Write-Output "Install oh-my-posh..."
-$oh_my_posh_home = "$installation\oh-my-posh"
-New-Item -Force -Type Directory $oh_my_posh_home
-Copy-Item -Path "apps\oh-my-posh\*" -Destination $oh_my_posh_home -Recurse -Force
-[Environment]::SetEnvironmentVariable("Path", "$env:Path;$oh_my_posh_home\bin", "Machine")
-[Environment]::SetEnvironmentVariable("POSH_INSTALLER", "manual", "Machine")
-[Environment]::SetEnvironmentVariable("POSH_THEMES_PATH", "$oh_my_posh_home\themes", "Machine")
+function Invoke-PowerShellIntegration {
+    Write-Host "PowerShell Integration..."
 
-Write-Output "Configure Windows Powershell..."
-$pwsh_profile = "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-Copy-Item -Path "integrations\powershell\Microsoft.PowerShell_profile.ps1" -Destination $pwsh_profile -Force
+    $pwshProfile = "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+    Copy-Item -Path "integrations\powershell\Microsoft.PowerShell_profile.ps1" -Destination $pwshProfile -Force | Out-Null
 
-Write-Output "Update PSReadLine Module..."
-Install-Module -Name PSReadLine
+    Write-Host "Updating PSReadLine module..."
+    Install-Module -Name PSReadLine -Force
+}
 
-Write-Output "Installation completed."; Pause
+function Invoke-CmdIntegration {
+    Write-Host "CMD Integration..."
+
+    Write-Host "Installing clink..."
+    $clinkBase = "$global:installationPath\clink"
+    Copy-Directory -Source "apps\clink" -Destination $clinkBase
+    [Environment]::SetEnvironmentVariable("CLINK_HOME", "$clinkBase", "Machine")
+
+    Copy-Item -Path "integrations\cmd\oh-my-posh.lua" -Destination $clinkBase -Force | Out-Null
+}
+
+# Main
+Restart-Privileged
+Install-WindowsTerminal
+Install-Fonts
+Install-OhMyPosh
+Invoke-PowerShellIntegration
+Invoke-CmdIntegration
+
+Write-Host "Installation completed."
+Pause
