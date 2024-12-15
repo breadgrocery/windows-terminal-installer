@@ -1,8 +1,8 @@
-简体中文 | [English](README.md)
+[English](README.md) | 简体中文
 
 # Windows Terminal Installer
 
-> 一键安装配置 Windows Terminal、starship、Nerd Font。
+> 一键安装配置 [Windows Terminal](https://github.com/microsoft/terminal), [Starship](https://github.com/starship/starship), and [Nerd Font](https://www.nerdfonts.com/)。
 
 ## 使用方式
 
