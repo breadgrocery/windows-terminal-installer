@@ -1,23 +1,25 @@
+English | [简体中文](README.zh.md)
+
 # Windows Terminal Installer
 
-> 一键安装配置 Windows Terminal、starship、Nerd Font。
+> One-click installation and configuration for Windows Terminal, Starship, and Nerd Font.
 
-## 使用方式
+## Usage
 
-1. 克隆/下载代码。
-2. 使用 `Powershell` 运行下列命令，修改执行策略，允许运行本地脚本。
+1. Clone/download the code.
+2. Use `Powershell` to run the following command to modify the execution policy and allow running local scripts.
 
    ```powershell
    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
    ```
 
-3. 右键 `install.ps1` 文件，选择 `使用 Powershell 运行` 。
-4. 按照脚本提示输入安装位置（如果直接键入`回车`，默认安装到 `C:\Program Files\Windows Terminal` ）。
+3. Right-click the `install.ps1` file and select `Run with PowerShell`.
+4. Follow the script prompts to specify the installation location (press `Enter` to install to the default path `C:\Program Files\Windows Terminal`).
 
-## 自定义字体
+## Custom Fonts
 
-- `Fonts` 文件夹下的**所有字体文件**会被安装到系统中（默认为 `FiraCode Nerd Font`）。
-- 自定义[Nerd Font](https://www.nerdfonts.com/font-downloads)请自行下载字体文件，放入`Fonts` 文件夹中，并修改 `settings.json` 文件中的 `FiraCode Nerd Font` 为自定义的字体名称。
+- All font files in the `Fonts` folder will be installed to the system (default is `FiraCode Nerd Font`).
+- For custom [Nerd Font](https://www.nerdfonts.com/font-downloads), download the font files, place them in the Fonts folder, and modify the ·settings.json· file to replace `FiraCode Nerd Font` with the custom font name.
 
 > [!NOTE]  
-> 运行期间建议保持网络通畅，脚本会尝试升级本地 PowerShell 的 `PSReadLine` 模块（命令历史记录的提示功能要求 PSReadLine >= `v2.1.0`），并按照提示允许安装升级。
+> It is recommended to maintain a stable internet connection during the installation process. The script will attempt to upgrade the local PowerShell `PSReadLine` module (which requires PSReadLine >= `v2.1.0` for command history prompt functionality), and you should allow the upgrade when prompted.
