@@ -33,15 +33,14 @@ function Install-WindowsTerminal {
     reg add "HKCR\Directory\Background\shell\runas\command" /t REG_SZ /d "$windowsTerminalBase\WindowsTerminal.exe" /f | Out-Null
 }
 
-function Install-OhMyPosh {
-    Write-Host "Installing oh-my-posh..."
-    $ohMyPoshHome = "$global:installationPath\oh-my-posh"
-    Copy-Directory -Source "apps\oh-my-posh" -Destination $ohMyPoshHome
+function Install-Starship {
+    Write-Host "Installing starship..."
+    $starshipHome = "$global:installationPath\starship"
+    Copy-Directory -Source "apps\starship" -Destination $starshipHome
 
-    Write-Host "Setting environment variables for oh-my-posh..."
-    [Environment]::SetEnvironmentVariable("Path", "$env:Path;$ohMyPoshHome\bin", "Machine")
-    [Environment]::SetEnvironmentVariable("POSH_INSTALLER", "manual", "Machine")
-    [Environment]::SetEnvironmentVariable("POSH_THEMES_PATH", "$ohMyPoshHome\themes", "Machine")
+    Write-Host "Setting environment variables for starship..."
+    [Environment]::SetEnvironmentVariable("Path", "$env:Path;$starshipHome", "Machine")
+    [Environment]::SetEnvironmentVariable("STARSHIP_CONFIG", "$starshipHome\starship.toml", "Machine")
 }
 
 function Install-Fonts {
@@ -85,14 +84,14 @@ function Invoke-CmdIntegration {
     Copy-Directory -Source "apps\clink" -Destination $clinkBase
     [Environment]::SetEnvironmentVariable("CLINK_HOME", "$clinkBase", "Machine")
 
-    Copy-Item -Path "integrations\cmd\oh-my-posh.lua" -Destination $clinkBase -Force | Out-Null
+    Copy-Item -Path "integrations\cmd\starship.lua" -Destination $clinkBase -Force | Out-Null
 }
 
 # Main
 Restart-Privileged
 Install-WindowsTerminal
 Install-Fonts
-Install-OhMyPosh
+Install-Starship
 Invoke-PowerShellIntegration
 Invoke-CmdIntegration
 
